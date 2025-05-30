@@ -1,19 +1,30 @@
-import React, { useState, useRef } from 'react';
-import { Layout, Button, Space, message } from 'antd';
+import React, { useState } from 'react';
+import { Layout, Button, Space, message, Typography } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import type { Route } from "./+types/home";
 import FoodMap from '../components/Map/MapContainer';
 import SearchPanel from '../components/SearchPanel';
-import RestaurantList from '../components/RestaurantList';
+import InfiniteRestaurantList from '../components/InfiniteRestaurantList';
 import MobileLayout from '../components/MobileLayout';
-import MobileRestaurantList from '../components/MobileRestaurantList';
 import RestaurantForm from '../components/RestaurantForm';
+import ThemeToggle from '../components/ThemeToggle';
+import {
+  MainLayoutProvider,
+  HeaderStyleProvider,
+  SiderStyleProvider,
+  SearchPanelStyleProvider,
+  FullHeightContainer,
+  SearchAreaContainer,
+  ListAreaContainer,
+  HeaderContentContainer,
+} from '../components/LayoutStyles';
 import { useRestaurants } from '../hooks/useRestaurants';
 import { useResponsive } from '../hooks/useResponsive';
 import { useGeolocation } from '../hooks/useGeolocation';
 import type { Restaurant, MapPosition, SearchParams } from '../types/restaurant';
 
 const { Header, Content, Sider } = Layout;
+const { Title } = Typography;
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -28,7 +39,8 @@ export default function Home() {
     loading,
     loadingCreate,
     loadingUpdate,
-    handleSearch,
+    searchParams,
+    searchRestaurants,
     createRestaurant,
     updateRestaurant,
     deleteRestaurant,
@@ -50,7 +62,7 @@ export default function Home() {
   const [isInitialLocationSet, setIsInitialLocationSet] = useState(false);
 
   // 获取用户地理位置
-  const { latitude, longitude, loading: locationLoading, error: locationError } = useGeolocation({
+  const { latitude, longitude } = useGeolocation({
     onSuccess: (position) => {
       if (!isInitialLocationSet) {
         setMapCenter({
@@ -76,11 +88,9 @@ export default function Home() {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isEditingLocation, setIsEditingLocation] = useState(false); // 标记是否在编辑位置
 
-  const mapRef = useRef<any>(null);
-
   // 处理搜索
   const handleSearchSubmit = (params: SearchParams) => {
-    handleSearch(params);
+    searchRestaurants(params);
   };
 
   // 处理添加餐厅
@@ -100,7 +110,7 @@ export default function Home() {
   // 处理表单提交
   const handleFormSubmit = async (data: Partial<Restaurant>) => {
     try {
-      if (editingRestaurant) {
+      if (editingRestaurant && editingRestaurant.id) {
         await updateRestaurant(editingRestaurant.id, data);
       } else {
         await createRestaurant(data as Omit<Restaurant, 'id' | 'createdTime' | 'modifiedTime'>);
@@ -186,6 +196,7 @@ export default function Home() {
           isSelectingLocation={isSelectingLocation}
           selectedLocation={selectedLocation}
           userLocation={latitude && longitude ? { lat: latitude, lng: longitude } : null}
+          searchParams={searchParams}
           onRestaurantClick={handleRestaurantClick}
           onMapClick={handleMapClick}
           onCancelLocationSelection={handleCancelLocationSelection}
@@ -217,76 +228,88 @@ export default function Home() {
 
   // 桌面端布局
   return (
-    <Layout style={{ height: '100vh' }}>
-      <Header style={{
-        background: '#fff',
-        padding: '0 24px',
-        borderBottom: '1px solid #f0f0f0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <h1 style={{ margin: 0, color: '#1890ff' }}>美食地图</h1>
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleAddRestaurant}
-          >
-            添加餐厅
-          </Button>
-        </Space>
-      </Header>
+    <MainLayoutProvider>
+      <Layout style={{ height: '100vh' }}>
+        <HeaderStyleProvider>
+          <Header>
+            <HeaderContentContainer>
+              <Title level={3}>
+                美食地图
+              </Title>
+              <Space>
+                <ThemeToggle />
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAddRestaurant}
+                >
+                  添加餐厅
+                </Button>
+              </Space>
+            </HeaderContentContainer>
+          </Header>
+        </HeaderStyleProvider>
 
-      <Layout>
-        <Sider width={400} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
-          <div style={{ padding: '16px', height: '100%', overflow: 'auto' }}>
-            <Space direction="vertical" style={{ width: '100%' }} size="middle">
-              <SearchPanel
-                onSearch={handleSearchSubmit}
-                loading={loading}
-              />
-              <RestaurantList
-                restaurants={restaurants}
-                loading={loading}
-                onEdit={handleEditRestaurant}
-                onDelete={handleDeleteRestaurant}
-                onLocate={handleLocateRestaurant}
-              />
-            </Space>
-          </div>
-        </Sider>
+        <Layout>
+          <SiderStyleProvider>
+            <Sider width={400}>
+              <FullHeightContainer>
+                {/* 固定的搜索区域 */}
+                <SearchPanelStyleProvider>
+                  <SearchAreaContainer>
+                    <SearchPanel
+                      onSearch={handleSearchSubmit}
+                      loading={loading}
+                    />
+                  </SearchAreaContainer>
+                </SearchPanelStyleProvider>
 
-        <Content>
-          <FoodMap
-            restaurants={restaurants}
-            center={mapCenter}
-            onRestaurantClick={handleRestaurantClick}
-            onMapClick={handleMapClick}
-            isSelectingLocation={isSelectingLocation}
-            selectedLocation={selectedLocation}
-            userLocation={latitude && longitude ? { lat: latitude, lng: longitude } : null}
-            onCancelLocationSelection={handleCancelLocationSelection}
-            className="h-full w-full"
-          />
-        </Content>
+      
+                <ListAreaContainer>
+                  <InfiniteRestaurantList
+                    searchParams={searchParams}
+                    onEdit={handleEditRestaurant}
+                    onDelete={handleDeleteRestaurant}
+                    onLocate={handleLocateRestaurant}
+                    height="100%"
+                    className="desktop-restaurant-list"
+                  />
+                </ListAreaContainer>
+              </FullHeightContainer>
+            </Sider>
+          </SiderStyleProvider>
+
+          <Content>
+            <FoodMap
+              restaurants={restaurants}
+              center={mapCenter}
+              onRestaurantClick={handleRestaurantClick}
+              onMapClick={handleMapClick}
+              isSelectingLocation={isSelectingLocation}
+              selectedLocation={selectedLocation}
+              userLocation={latitude && longitude ? { lat: latitude, lng: longitude } : null}
+              onCancelLocationSelection={handleCancelLocationSelection}
+              className="h-full w-full"
+            />
+          </Content>
+        </Layout>
+
+        <RestaurantForm
+          visible={formVisible}
+          restaurant={editingRestaurant}
+          selectedLocation={selectedLocation}
+          onSubmit={handleFormSubmit}
+          onStartLocationSelection={handleStartLocationSelection}
+          onCancel={() => {
+            setFormVisible(false);
+            setEditingRestaurant(null);
+            setSelectedLocation(null);
+            setIsSelectingLocation(false);
+            setIsEditingLocation(false);
+          }}
+          loading={loadingCreate || loadingUpdate}
+        />
       </Layout>
-
-      <RestaurantForm
-        visible={formVisible}
-        restaurant={editingRestaurant}
-        selectedLocation={selectedLocation}
-        onSubmit={handleFormSubmit}
-        onStartLocationSelection={handleStartLocationSelection}
-        onCancel={() => {
-          setFormVisible(false);
-          setEditingRestaurant(null);
-          setSelectedLocation(null);
-          setIsSelectingLocation(false);
-          setIsEditingLocation(false);
-        }}
-        loading={loadingCreate || loadingUpdate}
-      />
-    </Layout>
+    </MainLayoutProvider>
   );
 }

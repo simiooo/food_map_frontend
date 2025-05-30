@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, FloatButton, Badge } from 'antd';
 import { PlusOutlined, SearchOutlined, FilterOutlined, MenuOutlined } from '@ant-design/icons';
 import FoodMap from './Map/MapContainer';
-import MobileRestaurantList from './MobileRestaurantList';
+import InfiniteRestaurantList from './InfiniteRestaurantList';
 import SearchPanel from './SearchPanel';
 import type { Restaurant, MapPosition, SearchParams } from '../types/restaurant';
 
@@ -13,6 +13,7 @@ interface MobileLayoutProps {
   isSelectingLocation: boolean;
   selectedLocation: { lat: number; lng: number } | null;
   userLocation?: { lat: number; lng: number; accuracy?: number } | null;
+  searchParams?: SearchParams;
   onRestaurantClick: (restaurant: Restaurant) => void;
   onMapClick: (position: { lat: number; lng: number }) => void;
   onCancelLocationSelection: () => void;
@@ -30,6 +31,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   isSelectingLocation,
   selectedLocation,
   userLocation,
+  searchParams,
   onRestaurantClick,
   onMapClick,
   onCancelLocationSelection,
@@ -114,15 +116,15 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
         {/* 餐厅列表 */}
         <div className="list-content">
-          <MobileRestaurantList
-            restaurants={restaurants}
-            loading={loading}
+          <InfiniteRestaurantList
+            searchParams={searchParams}
             onEdit={onEdit}
             onDelete={onDelete}
             onLocate={(restaurant) => {
               onLocate(restaurant);
               setListExpanded(false); // 定位后收起列表
             }}
+            height={listExpanded ? window.innerHeight * 0.6 - 120 : window.innerHeight * 0.4 - 120}
           />
         </div>
       </div>

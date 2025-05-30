@@ -1,8 +1,4 @@
-import type { Restaurant } from '../types/restaurant';
-
-// 模拟餐厅数据
-
-export const mockRestaurants: Restaurant[]=  [
+[
   {
     "name": "9号花园私房菜",
     "color": "#7E97FF",
@@ -23139,10 +23135,4 @@ export const mockRestaurants: Restaurant[]=  [
     "longitude": "113.153730",
     "latitude": "23.026370"
   }
-].map(restaurant => {
-  return {
-    ...restaurant,
-    longitude: restaurant.longitude ? parseFloat(restaurant.longitude) : 0,
-    latitude: restaurant.latitude ? parseFloat(restaurant.latitude) : 0,
-  }
-})
+]

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Marker, Popup } from 'react-leaflet';
-import { Button, Typography, Space } from 'antd';
+import { Button, Typography, Space, ConfigProvider, Card } from 'antd';
 import { MdRestaurant } from 'react-icons/md';
 import type { Restaurant } from '../../types/restaurant';
 import * as L from 'leaflet'
@@ -54,7 +54,13 @@ const RestaurantMarker: React.FC<RestaurantMarkerProps> = ({ restaurant, onClick
   }
 
   return (
-    <>
+    <ConfigProvider
+    theme={{
+      token: {
+        fontSize: 14,
+      }
+    }}
+    >
       <Marker
         position={[restaurant.latitude, restaurant.longitude]}
         icon={icon}
@@ -62,23 +68,31 @@ const RestaurantMarker: React.FC<RestaurantMarkerProps> = ({ restaurant, onClick
           click: handleMarkerClick,
         }}
       >
-        <Popup>
-          <div style={{ minWidth: '200px', maxWidth: '300px' }}>
+        <Popup
+        
+        >
+          <div style={{ minWidth: '200px', maxWidth: '300px',}}>
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
               <Title level={5} style={{ margin: 0 }}>
                 {restaurant.name}
               </Title>
 
-              <Text type="secondary">
+              <Text style={{
+                fontSize: 14
+              }} type="secondary">
                 <strong>地址:</strong> {restaurant.address}
               </Text>
 
-              <Text type="secondary">
+              <Text style={{
+                fontSize: 14
+              }} type="secondary">
                 <strong>分类:</strong> {restaurant.category}
               </Text>
 
               {restaurant.description && (
-                <Text type="secondary">
+                <Text style={{
+                fontSize: 14
+              }} type="secondary">
                   <strong>描述:</strong> {restaurant.description}
                 </Text>
               )}
@@ -111,12 +125,11 @@ const RestaurantMarker: React.FC<RestaurantMarkerProps> = ({ restaurant, onClick
       </Marker>
 
       {/* 自定义标记样式 */}
-      <style jsx global>{`
+      <style>{`
         .custom-restaurant-marker {
           background: transparent;
           border: none;
         }
-
         .restaurant-marker {
           width: 32px;
           height: 32px;
@@ -142,7 +155,7 @@ const RestaurantMarker: React.FC<RestaurantMarkerProps> = ({ restaurant, onClick
           height: 18px;
         }
       `}</style>
-    </>
+    </ConfigProvider>
   );
 };
 

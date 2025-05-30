@@ -1,6 +1,38 @@
 import axios from 'axios';
 import type { Restaurant, ApiResponse, PaginationParams, SearchParams } from '../types/restaurant';
-import { mockRestaurants } from '../data/mockData';
+import rawRestaurants from '../data/output_new.json'
+// 内联模拟数据
+const generateMockRestaurants = (): Restaurant[] => {
+  const restaurants: Restaurant[] = rawRestaurants.map(restaurant => {
+    return {
+      ...restaurant,
+      longitude: restaurant?.longitude ? Number(restaurant?.longitude) : -1,
+      latitude: restaurant?.latitude ? Number(restaurant?.latitude) : -1,
+
+    }
+  });
+  // for (let i = 1; i <= 50; i++) {
+  //   const nameIndex = (i - 1) % baseNames.length;
+  //   const categoryIndex = (i - 1) % categories.length;
+
+  //   restaurants.push({
+  //     id: i.toString(),
+  //     name: `${baseNames[nameIndex]}${i > 25 ? '(分店)' : ''}`,
+  //     address: `北京市${['东城区', '西城区', '朝阳区', '海淀区', '丰台区'][i % 5]}某某街道${i}号`,
+  //     description: `精选优质食材，传统工艺制作，口味地道，环境舒适，是您用餐的好选择。店铺编号：${i}`,
+  //     category: categories[categoryIndex],
+  //     longitude: 116.4074 + (Math.random() - 0.5) * 0.1,
+  //     latitude: 39.9042 + (Math.random() - 0.5) * 0.1,
+  //     creator: `user${i}`,
+  //     create_time: `2024-01-${String(15 + (i % 15)).padStart(2, '0')} ${String(10 + (i % 12)).padStart(2, '0')}:${String(30 + (i % 30)).padStart(2, '0')}:00`,
+  //     photo: i % 3 === 0 ? `https://images.unsplash.com/photo-${1569718212165 + i}?w=400` : null,
+  //   });
+  // }
+
+  return restaurants;
+};
+
+const mockRestaurants = generateMockRestaurants();
 
 // 创建axios实例
 const api = axios.create({
@@ -73,7 +105,7 @@ let mockData = [...mockRestaurants];
 const mockApi = {
   // 模拟搜索餐厅
   searchRestaurants: async (params: SearchParams): Promise<ApiResponse<Restaurant[]>> => {
-    await new Promise(resolve => setTimeout(resolve, 500)); // 模拟网络延迟
+    await new Promise(resolve => setTimeout(resolve, 800)); // 模拟网络延迟
 
     let filteredData = [...mockData];
 
@@ -83,7 +115,7 @@ const mockApi = {
       filteredData = filteredData.filter(restaurant =>
         restaurant.name.toLowerCase().includes(keywords) ||
         restaurant.address.toLowerCase().includes(keywords) ||
-        restaurant.description.toLowerCase().includes(keywords)
+        (restaurant.description && restaurant.description.toLowerCase().includes(keywords))
       );
     }
 
@@ -97,11 +129,20 @@ const mockApi = {
       }
     }
 
+    // 分页处理
+    const pageNum = parseInt(params.pageNum || '1');
+    const pageSize = parseInt(params.pageSize || '10');
+    const startIndex = (pageNum - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedData = filteredData.slice(startIndex, endIndex);
+
+    console.log(`分页请求: 第${pageNum}页, 每页${pageSize}条, 总共${filteredData.length}条, 返回${paginatedData.length}条`);
+
     return {
       code: 'success',
       message: '获取成功',
       description: '',
-      data: filteredData,
+      data: paginatedData,
     };
   },
 
@@ -112,8 +153,7 @@ const mockApi = {
     const newRestaurant: Restaurant = {
       ...data,
       id: Date.now().toString(),
-      createdTime: new Date().toISOString(),
-      modifiedTime: new Date().toISOString(),
+      create_time: new Date().toISOString(),
     };
 
     mockData.push(newRestaurant);

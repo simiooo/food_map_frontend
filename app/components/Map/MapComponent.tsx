@@ -145,6 +145,7 @@ const MapComponent: React.FC<MapProps> = ({
       <MapContainer
         center={[center.lat, center.lng]}
         zoom={center.zoom || 13}
+        zoomControl={false}
         attributionControl={false}
         style={{
           height: '100%',

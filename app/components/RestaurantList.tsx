@@ -97,7 +97,7 @@ const RestaurantList: React.FC<RestaurantListProps> = ({
                 坐标: {restaurant.longitude.toFixed(6)}, {restaurant.latitude.toFixed(6)}
               </Text>
               <Text type="secondary" style={{ fontSize: '12px' }}>
-                创建时间: {new Date(restaurant.createdTime).toLocaleString()}
+                创建时间: {new Date(restaurant.create_time).toLocaleString()}
               </Text>
             </Space>
           </div>
@@ -133,7 +133,7 @@ const RestaurantList: React.FC<RestaurantListProps> = ({
           <Popconfirm
             title="确定要删除这个餐厅吗？"
             description="删除后无法恢复，请谨慎操作。"
-            onConfirm={() => handleDelete(restaurant.id)}
+            onConfirm={() => restaurant.id && handleDelete(restaurant.id)}
             okText="确定"
             cancelText="取消"
           >
@@ -164,13 +164,6 @@ const RestaurantList: React.FC<RestaurantListProps> = ({
         renderItem={renderItem}
         locale={{
           emptyText: '暂无餐厅数据',
-        }}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total, range) =>
-            `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
         }}
       />
     </Card>
